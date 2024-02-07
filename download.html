@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlazmaBukkit - Your Minecraft, your way</title>
+	<meta name="description" content="A Server Platform for Minecraft: Java Edition based on Paper which provides many optimizations and features">
+    <link type="text/css" rel="stylesheet" href="css/raleway.css" />
+    <link type="text/css" rel="stylesheet" href="css/index.css" />
+    <link href="css/downloads.css" type="text/css" rel="stylesheet" />
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-HOYvKm/5fKSBjqTWi+A3mSA2NvKLDY7Sy3OIjHIb1sAGXG2IVy6RxlvhDbzpOR1NhPdUmo4ltH/yaQl1M0Av0w==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+<body>
+<div class="top-row">
+    <div class="container">
+        <nav>
+            <a href="https://jd.plazmamc.org/docs"><i class="fas fa-book-open"></i> Docs</a>
+            <a href="https://github.com/PlazmaMC" target="_blank"><i class="fab fa-github"></i> GitHub</a>
+            <a href="https://discord.gg/5hYydS3AQu" target="_blank"><i class="fab fa-discord"></i> Discord</a>
+            <a href="/download.html"><i class="fas fa-cloud-download-alt"></i> Downloads</a>
+        </nav>
+        <a href="/"><img src="images/title-400.png" alt="PlazmaBukkit logo"></a>
+        <div>
+            <a href="/"><h2>PlazmaBukkit</h2></a>
+            <p>Your Minecraft, your way</p>
+        </div>
+    </div>
+</div>
+<div class="row-one">
+    <div class="container">
+        <ul class="tabs">
+            <!-- Your versions of Minecraft -->
+            <li class="selected"><a class="tabLink">1.20.4</a></li>
+            <li class><a class="tabLink">1.20.2</a></li>
+            <li class><a class="tabLink">1.20.1</a></li>
+            <li class><a class="tabLink">1.19.4</a></li>
+        </ul>
+        <select id="dropdown">
+             <!-- Your versions of Minecraft -->
+            <option value="1.20.4" selected>1.20.4</option>
+            <option value="1.20.2">1.20.2</option>
+            <option value="1.20.1">1.20.1</option>
+            <option value="1.19.4">1.19.4</option>
+        </select>
+        <div class="versionWarning "></div>
+        <table class="downloads">
+            <thead>
+                <tr>
+                    <td class="left">Build</td>
+                    <td class="middle">Changes</td>
+                    <td class="right">Date (12h)</td>
+                </tr>
+            </thead>
+            <tbody id="downloadBody">
+                <!-- Data on releases using JavaScript will be added here -->
+            </tbody>
+        </table>
+    </div>
+</div>
+<script>
+// Event Processor to change the version of minecraft
+function loadVersionsAndDisplay(selectedVersion) {
+    // Cleaning the table before loading data of the new version
+    document.getElementById('downloadBody').innerHTML = '';
+    console.log('Selected version:', selectedVersion); // debug
+    // Receiving data with API GITHUB
+    fetch('https://api.github.com/repos/PlazmaMC/PlazmaBukkit/releases')
+        .then(response => response.json())
+        .then(data => {
+            console.log('Data from GitHub API:', data); // debug
+            const downloadBody = document.getElementById('downloadBody');
+            // Enough of each release and adding appropriate lines to the table
+            data.forEach(release => {
+                release.assets.forEach(asset => {
+                    const fileName = asset.name; // read name
+                    // Enough of each release and adding appropriate lines to the table
+                    if (fileName.includes(selectedVersion) && fileName.endsWith('-SNAPSHOT-reobf.jar')) {
+                        const row = document.createElement('tr');
+                        const buildColumn = document.createElement('td');
+                        const link = document.createElement('a');
+                        link.href = asset.browser_download_url;
+                        link.classList.add('button', 'white-button');
+                        link.download = asset.name;
+                        link.title = `Download build #${release.id}`;
+                        link.innerHTML = `<span><i class="fas fa-cloud-download-alt"></i> ${release.id}</span>`;
+                        buildColumn.appendChild(link);
+                        row.appendChild(buildColumn);
+                        const changesColumn = document.createElement('td');
+                        const changesParagraph = document.createElement('p');
+                        const changesText = release.body; // Get the text "changes"
+                        changesParagraph.innerHTML = markdownToHTML(changesText); // Get the text "changes" <p>
+                        changesParagraph.classList.add('changes'); // Add the class "Changes" for stylization
+                        changesColumn.appendChild(changesParagraph);
+                        row.appendChild(changesColumn);
+                        const dateColumn = document.createElement('td');
+                        dateColumn.classList.add('date');
+                        const date = new Date(release.published_at);
+                        const options = { month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+                        dateColumn.textContent = date.toLocaleDateString('en-US', options);
+                        row.appendChild(dateColumn);
+                        downloadBody.appendChild(row);
+                    }
+                });
+            });
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+// Функция для преобразования текста из Markdown в HTML
+function markdownToHTML(text) {
+    // headlines
+    text = text.replace(/^# (.+)$/gm, '<h1>$1</h1>'); // Заголовок первого уровня
+    text = text.replace(/^## (.+)$/gm, '<h2>$1</h2>'); // Заголовок второго уровня
+    text = text.replace(/^### (.+)$/gm, '<h3>$1</h3>'); // Заголовок третьего уровня
+    
+    // Lists
+    text = text.replace(/^\* (.+)$/gm, '<li>$1</li>'); // Неупорядоченный список
+    text = text.replace(/^\d\. (.+)$/gm, '<li>$1</li>'); // Нумерованный список
+    
+    // Text selection
+    text = text.replace(/\*\*(.+?)\*\*/gm, '<strong>$1</strong>'); // Жирный текст
+    text = text.replace(/__(.+?)__/gm, '<strong>$1</strong>'); // Жирный текст (альтернативный синтаксис)
+    text = text.replace(/\*(.+?)\*/gm, '<em>$1</em>'); // Курсив
+    text = text.replace(/_(.+?)_/gm, '<em>$1</em>'); // Курсив (альтернативный синтаксис)
+    text = text.replace(/`(.+?)`/gm, '<code>$1</code>'); // Форматирование кода с помощью обратных кавычек
+    text = text.replace(/~~(.+?)~~/gm, '<del>$1</del>'); // Зачеркнутый текст
+    
+    // Links
+    text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/gm, '<a href="$2">$1</a>'); // Ссылки
+    
+    // Block quotes
+    text = text.replace(/^\>(.+)$/gm, '<blockquote>$1</blockquote>'); // Блочные цитаты
+    
+    // Horizontal feature
+    text = text.replace(/^\-\-\-$/gm, '<hr>'); // Горизонтальная черта
+    
+    // Translations of lines
+    text = text.replace(/\n/gm, '<br>'); // Переносы строк
+    
+    // Translations of lines
+    text = '<ul>' + text + '</ul>'; // Оборачиваем в тег <ul>, так как это список
+    
+    // We make a link "Full Changelog" clickable hmm no work
+    text = text.replace(/Full Changelog: ([^<]+)/gm, '<a href="$1">$1</a>'); 
+    
+    return text;
+}
+
+// Call the function of downloading data when loading the page
+document.addEventListener("DOMContentLoaded", function(event) {
+    loadVersionsAndDisplay(document.querySelector('.tabs li.selected .tabLink').textContent);
+});
+
+// Event Processor to change the version of minecraft
+document.querySelectorAll('.tabLink').forEach(tabLink => {
+    tabLink.addEventListener('click', () => {
+       // SELECTED class installation for an active tab
+        document.querySelectorAll('.tabs li').forEach(tab => {
+            tab.classList.remove('selected');
+        });
+        tabLink.parentElement.classList.add('selected');
+        loadVersionsAndDisplay(tabLink.textContent); // Call the function of downloading data and display versions
+    });
+});
+</script>
+</body>
+<footer>
+© 2024 <a href="https://plazmamc.org">plazmamc.org</a> <a href="https://github.com/PlazmaMC/PlazmaBukkit/blob/main/LICENSE.md">MIT</a>
+</footer>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v84a3a4012de94ce1a686ba8c167c359c1696973893317" integrity="sha512-euoFGowhlaLqXsPWQ48qSkBSCFs3DPRyiwVu3FjR96cMPx+Fr+gpWRhIafcHwqwCqWS42RZhIudOvEI+Ckf6MA==" data-cf-beacon='{"rayId":"851ae6847edb0bd0","r":1,"version":"2024.2.0","token":"bd47998fb89e4b4cb4963a257b69d23f"}' crossorigin="anonymous"></script>
+</html>
